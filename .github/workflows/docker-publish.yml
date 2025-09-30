@@ -1,0 +1,24 @@
+name: Construir y Publicar Docker
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+    build-and-push:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout repository
+              uses: actions/checkout@v5
+
+            - name: Log in a Docker Hub
+              uses: docker/login-action@v3
+              with:
+                username: ${{ secrets.DOCKER_USER }}
+                password: ${{ secrets.DOCKER_PASSWORD }}
+            
+            - name: Construir la imagen Docker
+              run: docker build -t ${{ secrets.DOCKER_USER }}/univ-prueba:lastest .
+
+            - name: Publicar la imagen Docker
+              run: docker push ${{ secrets.DOCKER_USER }}/univ-prueba:lastest
