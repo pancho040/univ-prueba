@@ -1,6 +1,7 @@
 services:
-web:
-image: nginx:latest
-containet_name: web_server
-ports:
-- "80:80"
+  web:
+    image: pancho020/univ-prueba:latest
+    container_name: univ-prueba-web
+    ports:
+      - "80:80"
+    restart: always
