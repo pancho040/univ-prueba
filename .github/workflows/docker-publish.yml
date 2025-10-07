@@ -31,7 +31,7 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v5
 
-      # 1️⃣ Crear directorio y copiar setup_vm.sh y docker-compose.yml a la VM
+      # 1️⃣ Copiar setup_vm.sh y docker-compose.yml a la VM
       - name: Copiar archivos a la VM
         uses: appleboy/scp-action@master
         with:
