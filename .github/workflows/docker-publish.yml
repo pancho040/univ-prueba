@@ -64,8 +64,12 @@ jobs:
             DEPLOY_PATH="/home/${{ secrets.SSH_USER }}/deploy"
             cd $DEPLOY_PATH
 
+            # Guardar Docker secrets en variables locales
+            DOCKER_USER="${{ secrets.DOCKER_USER }}"
+            DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}"
+
             # Login en Docker Hub
-            echo ${{ secrets.DOCKER_PASSWORD }} | sudo docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
+            echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USER" --password-stdin
 
             sudo docker-compose pull
             sudo docker-compose up -d --force-recreate
