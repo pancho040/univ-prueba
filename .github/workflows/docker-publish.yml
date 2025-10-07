@@ -1,4 +1,4 @@
-name: Construir, Publicar y Desplegar Docker
+name: Construir y Publicar Docker
 
 on:
   push:
@@ -28,16 +28,45 @@ jobs:
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
-      - name: Copiar y ejecutar script en la VM
+      - name: Checkout del código (obtener docker-compose.yml, setup_vm.sh)
+        uses: actions/checkout@v5
+
+      - name: Ejecutar script de instalación en la VM
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            mkdir -p ~/deploy
-            cd ~/deploy
-            echo "Descargando última versión de la imagen..."
-            docker pull ${{ secrets.DOCKER_USER }}/univ-prueba:latest
-            docker-compose down || true
-            docker-compose up -d --remove-orphans
+            mkdir -p ~/tmp
+            cp setup_vm.sh ~/tmp/setup_vm.sh || true
+            chmod +x ~/tmp/setup_vm.sh
+            ~/tmp/setup_vm.sh ${{ secrets.SSH_USER }}
+            rm ~/tmp/setup_vm.sh
+
+      # Copiar docker-compose.yml a la VM
+      - name: Copiar docker-compose.yml a la VM
+        uses: appleboy/scp-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "docker-compose.yml"
+          target: "/home/${{ secrets.SSH_USER }}/deploy"
+
+      - name: Ejecutar docker-compose en la VM
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            DEPLOY_PATH="/home/${{ secrets.SSH_USER }}/deploy"
+            cd $DEPLOY_PATH
+
+            # Descarga la imagen desde Docker Hub
+            echo ${{ secrets.DOCKER_PASSWORD }} | sudo docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
+
+            sudo docker-compose pull
+            sudo docker-compose up -d --force-recreate
+            sudo docker logout
