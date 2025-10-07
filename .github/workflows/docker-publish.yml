@@ -31,6 +31,7 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v5
 
+      # 1️⃣ Copiar setup_vm.sh y docker-compose.yml a la VM
       - name: Copiar archivos a la VM
         uses: appleboy/scp-action@master
         with:
@@ -40,6 +41,7 @@ jobs:
           source: "setup_vm.sh,docker-compose.yml"
           target: "/home/${{ secrets.SSH_USER }}/deploy"
 
+      # 2️⃣ Ejecutar setup_vm.sh en la VM
       - name: Ejecutar setup_vm.sh en la VM
         uses: appleboy/ssh-action@master
         with:
@@ -51,6 +53,7 @@ jobs:
             chmod +x $DEPLOY_PATH/setup_vm.sh
             $DEPLOY_PATH/setup_vm.sh ${{ secrets.SSH_USER }}
 
+      # 3️⃣ Ejecutar docker-compose en la VM
       - name: Ejecutar docker-compose en la VM
         uses: appleboy/ssh-action@master
         with:
@@ -64,16 +67,24 @@ jobs:
             DOCKER_USER="${{ secrets.DOCKER_USER }}"
             DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}"
 
+            # Login en Docker Hub
             echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USER" --password-stdin
+
+            # Detener y eliminar contenedores existentes
             sudo docker-compose down
+
+            # Descargar imagen y levantar contenedor
             sudo docker-compose pull
             sudo docker-compose up -d --force-recreate
+
+            # Logout de Docker Hub
             sudo docker logout
 
+      # 4️⃣ Enviar correo con la URL pública usando App Password
       - name: Enviar email de deploy completado
         uses: dawidd6/action-send-mail@v6
         with:
-          connection_url: smtps://${{ secrets.EMAIL_USER }}:${{ secrets.EMAIL_APP_PASSWORD }}@smtp.gmail.com:465
+          connection_url: smtp+starttls://${{ secrets.EMAIL_USER }}:${{ secrets.EMAIL_PASSWORD }}@smtp.gmail.com:465
           subject: "Deploy completado ✅"
           body: "El deploy de la aplicación Docker se completó correctamente.\n\nAccede a la aplicación aquí: http://163.176.174.20/"
           to: molinafranz05@gmail.com
