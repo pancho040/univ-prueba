@@ -67,26 +67,21 @@ jobs:
             DOCKER_USER="${{ secrets.DOCKER_USER }}"
             DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}"
 
-            # Login en Docker Hub
             echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USER" --password-stdin
 
-            # Detener y eliminar contenedores existentes antes de levantar nuevos
+            # Detener contenedores existentes
             sudo docker-compose down
 
             sudo docker-compose pull
             sudo docker-compose up -d --force-recreate
             sudo docker logout
 
-      # 4️⃣ Enviar correo con la URL pública
+      # 4️⃣ Enviar correo con la URL pública usando App Password
       - name: Enviar email de deploy completado
-        uses: dawidd6/action-send-mail@v3
+        uses: dawidd6/action-send-mail@v6
         with:
-          server_address: smtp.gmail.com
-          server_port: 465
-          username: ${{ secrets.EMAIL_USER }}
-          password: ${{ secrets.EMAIL_PASSWORD }}
+          connection_url: smtp://{{ secrets.EMAIL_USER }}:${{ secrets.EMAIL_PASSWORD }}@smtp.gmail.com:465
           subject: "Deploy completado ✅"
           body: "El deploy de la aplicación Docker se completó correctamente.\n\nAccede a la aplicación aquí: http://163.176.174.20/"
           to: molinafranz943@gmail.com
           from: ${{ secrets.EMAIL_USER }}
-          secure: true
