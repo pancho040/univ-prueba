@@ -1,4 +1,4 @@
-name: Construir y Publicar Docker
+name: Construir, Publicar y Desplegar Docker
 
 on:
   push:
@@ -64,13 +64,24 @@ jobs:
             DEPLOY_PATH="/home/${{ secrets.SSH_USER }}/deploy"
             cd $DEPLOY_PATH
 
-            # Guardar Docker secrets en variables locales
             DOCKER_USER="${{ secrets.DOCKER_USER }}"
             DOCKER_PASSWORD="${{ secrets.DOCKER_PASSWORD }}"
 
-            # Login en Docker Hub
             echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USER" --password-stdin
-
             sudo docker-compose pull
             sudo docker-compose up -d --force-recreate
             sudo docker logout
+
+      # 4️⃣ Enviar correo con la URL pública
+      - name: Enviar email de deploy completado
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          username: ${{ secrets.EMAIL_USER }}
+          password: ${{ secrets.EMAIL_PASSWORD }}
+          subject: "Deploy completado ✅"
+          body: "El deploy de la aplicación Docker se completó correctamente.\n\nAccede a la aplicación aquí: http://163.176.174.20/"
+          to: molinafranz943@gmal.com
+          from: ${{ secrets.EMAIL_USER }}
+          secure: true
