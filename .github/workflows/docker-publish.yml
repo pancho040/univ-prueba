@@ -70,19 +70,16 @@ jobs:
             # Login en Docker Hub
             echo "$DOCKER_PASSWORD" | sudo docker login -u "$DOCKER_USER" --password-stdin
 
-            # Detener y eliminar contenedores existentes
+            # Detener y eliminar contenedores existentes antes de levantar nuevos
             sudo docker-compose down
 
-            # Descargar imágenes y levantar contenedores
             sudo docker-compose pull
             sudo docker-compose up -d --force-recreate
-
-            # Logout de Docker Hub
             sudo docker logout
 
       # 4️⃣ Enviar correo con la URL pública
       - name: Enviar email de deploy completado
-        uses: pancho040/action-send-mail@v1
+        uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
           server_port: 465
