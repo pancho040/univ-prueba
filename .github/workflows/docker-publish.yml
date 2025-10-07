@@ -31,7 +31,7 @@ jobs:
       - name: Checkout del código
         uses: actions/checkout@v5
 
-      # 1️⃣ Copiar setup_vm.sh y docker-compose.yml a la VM
+      # 1️⃣ Crear directorio y copiar setup_vm.sh y docker-compose.yml a la VM
       - name: Copiar archivos a la VM
         uses: appleboy/scp-action@master
         with:
@@ -39,7 +39,7 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "setup_vm.sh,docker-compose.yml"
-          target: "/deploy"
+          target: "/home/${{ secrets.SSH_USER }}/deploy"
 
       # 2️⃣ Ejecutar setup_vm.sh en la VM
       - name: Ejecutar setup_vm.sh en la VM
@@ -49,8 +49,9 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            chmod +x /deploy/setup_vm.sh
-            /deploy/setup_vm.sh ${{ secrets.SSH_USER }}
+            DEPLOY_PATH="/home/${{ secrets.SSH_USER }}/deploy"
+            chmod +x $DEPLOY_PATH/setup_vm.sh
+            $DEPLOY_PATH/setup_vm.sh ${{ secrets.SSH_USER }}
 
       # 3️⃣ Ejecutar docker-compose en la VM
       - name: Ejecutar docker-compose en la VM
@@ -60,7 +61,8 @@ jobs:
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /deploy
+            DEPLOY_PATH="/home/${{ secrets.SSH_USER }}/deploy"
+            cd $DEPLOY_PATH
 
             # Login en Docker Hub
             echo ${{ secrets.DOCKER_PASSWORD }} | sudo docker login -u ${{ secrets.DOCKER_USER }} --password-stdin
